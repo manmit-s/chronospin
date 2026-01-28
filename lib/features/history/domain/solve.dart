@@ -1,0 +1,42 @@
+import 'package:uuid/uuid.dart';
+
+enum Penalty { none, plus2, dnf }
+
+class Solve {
+  final String id;
+  final Duration time;
+  final String scramble;
+  final DateTime timestamp;
+  final Penalty penalty;
+
+  Solve({
+    String? id,
+    required this.time,
+    required this.scramble,
+    required this.timestamp,
+    this.penalty = Penalty.none,
+  }) : id = id ?? const Uuid().v4();
+
+  Duration get effectiveTime {
+    if (penalty == Penalty.plus2) {
+      return time + const Duration(seconds: 2);
+    }
+    return time; // DNF should be handled separately in logic, typically treated as infinity or special display
+  }
+
+  Solve copyWith({
+    String? id,
+    Duration? time,
+    String? scramble,
+    DateTime? timestamp,
+    Penalty? penalty,
+  }) {
+    return Solve(
+      id: id ?? this.id,
+      time: time ?? this.time,
+      scramble: scramble ?? this.scramble,
+      timestamp: timestamp ?? this.timestamp,
+      penalty: penalty ?? this.penalty,
+    );
+  }
+}

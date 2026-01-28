@@ -1,4 +1,5 @@
 import 'package:chronospin/core/theme/app_theme.dart';
+import 'package:chronospin/features/history/presentation/pages/history_page.dart';
 import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
 import 'package:chronospin/features/timer/presentation/widgets/timer_display.dart';
 import 'package:flutter/material.dart';
@@ -249,14 +250,35 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Quick Stats Heading
-                    const Text(
-                      "QUICK STATS",
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 12,
-                        letterSpacing: 1.5,
-                        fontWeight: FontWeight.bold,
+                    // Quick Stats Heading (Clickable)
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HistoryPage(),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "QUICK STATS",
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                              letterSpacing: 1.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.chevron_right,
+                            size: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
