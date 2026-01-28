@@ -1,5 +1,6 @@
 import 'package:chronospin/core/theme/app_theme.dart';
 import 'package:chronospin/features/history/presentation/pages/history_page.dart';
+import 'package:chronospin/features/profile/presentation/pages/profile_page.dart';
 import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
 import 'package:chronospin/features/timer/presentation/widgets/timer_display.dart';
 import 'package:flutter/material.dart';
@@ -95,13 +96,23 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            CircleAvatar(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).cardTheme.color,
-                              child: const Icon(
-                                Icons.person,
-                                color: Colors.grey,
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const ProfilePage(),
+                                  ),
+                                );
+                              },
+                              child: CircleAvatar(
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).cardTheme.color,
+                                child: const Icon(
+                                  Icons.person,
+                                  color: Colors.grey,
+                                ),
                               ),
                             ),
                             CircleAvatar(

@@ -8,6 +8,7 @@ class Solve {
   final String scramble;
   final DateTime timestamp;
   final Penalty penalty;
+  final String? notes;
 
   Solve({
     String? id,
@@ -15,6 +16,7 @@ class Solve {
     required this.scramble,
     required this.timestamp,
     this.penalty = Penalty.none,
+    this.notes,
   }) : id = id ?? const Uuid().v4();
 
   Duration get effectiveTime {
@@ -30,6 +32,7 @@ class Solve {
     String? scramble,
     DateTime? timestamp,
     Penalty? penalty,
+    String? notes,
   }) {
     return Solve(
       id: id ?? this.id,
@@ -37,6 +40,7 @@ class Solve {
       scramble: scramble ?? this.scramble,
       timestamp: timestamp ?? this.timestamp,
       penalty: penalty ?? this.penalty,
+      notes: notes ?? this.notes,
     );
   }
 }

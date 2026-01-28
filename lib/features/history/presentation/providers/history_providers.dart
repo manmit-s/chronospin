@@ -13,6 +13,13 @@ class HistoryNotifier extends StateNotifier<List<Solve>> {
     state = state.where((s) => s.id != id).toList();
   }
 
+  void updateSolve(Solve updatedSolve) {
+    state = [
+      for (final solve in state)
+        if (solve.id == updatedSolve.id) updatedSolve else solve,
+    ];
+  }
+
   void clearSession() {
     state = [];
   }
