@@ -1,3 +1,4 @@
+import 'package:chronospin/features/profile/presentation/providers/profile_providers.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +8,8 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profileImage = ref.watch(profileImageProvider);
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -23,12 +26,19 @@ class ProfilePage extends ConsumerWidget {
                       alignment: Alignment.bottomRight,
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text("Upload Profile Pic (Max 2MB)"),
-                              ),
-                            );
+                          onTap: () async {
+                            final error = await ref
+                                .read(profileImageProvider.notifier)
+                                .pickImage();
+
+                            if (context.mounted && error != null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(error),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
                           },
                           child: Stack(
                             children: [
@@ -40,11 +50,14 @@ class ProfilePage extends ConsumerWidget {
                                     width: 2,
                                   ),
                                 ),
-                                child: const CircleAvatar(
+                                child: CircleAvatar(
                                   radius: 50,
-                                  backgroundImage: NetworkImage(
-                                    'https://i.pravatar.cc/300',
-                                  ),
+                                  backgroundImage: profileImage != null
+                                      ? FileImage(profileImage)
+                                      : const NetworkImage(
+                                              'https://i.pravatar.cc/300',
+                                            )
+                                            as ImageProvider,
                                   backgroundColor: Colors.black,
                                 ),
                               ),
