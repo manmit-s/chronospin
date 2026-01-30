@@ -218,35 +218,23 @@ class _TimerPageState extends ConsumerState<TimerPage> {
               ],
             ),
 
-            // Floating Buttons
+            // History Action Button
             Positioned(
-              right: 20,
-              bottom: 200,
-              child: Column(
-                children: [
-                  FloatingActionButton.small(
-                    heroTag: "theme",
-                    onPressed: () {
-                      final current = ref.read(themeProvider).accent;
-                      final next =
-                          AppAccent.values[(AppAccent.values.indexOf(current) +
-                                  1) %
-                              AppAccent.values.length];
-                      ref.read(themeProvider.notifier).setAccent(next);
-                    },
-                    backgroundColor: const Color(0xFF1E1E1E),
-                    foregroundColor: Colors.white,
-                    child: const Icon(Icons.palette),
-                  ),
-                  const SizedBox(height: 16),
-                  FloatingActionButton(
-                    heroTag: "tools",
-                    onPressed: () {},
-                    backgroundColor: const Color(0xFF1E1E1E),
-                    foregroundColor: Colors.white,
-                    child: const Icon(Icons.build),
-                  ),
-                ],
+              left: 20,
+              bottom: 180,
+              child: FloatingActionButton.small(
+                heroTag: "history",
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HistoryPage(),
+                    ),
+                  );
+                },
+                backgroundColor: const Color(0xFF1E1E1E),
+                foregroundColor: Colors.white,
+                child: const Icon(Icons.history),
               ),
             ),
 
@@ -277,36 +265,26 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Quick Stats Heading (Clickable)
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HistoryPage(),
+                    // Quick Stats Heading (Non-clickable)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "QUICK STATS",
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                            letterSpacing: 1.5,
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "QUICK STATS",
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
-                              letterSpacing: 1.5,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.chevron_right,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.bar_chart,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     // Stats Row
