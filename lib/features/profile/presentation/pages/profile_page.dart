@@ -1,3 +1,4 @@
+import 'package:chronospin/features/history/domain/solve.dart';
 import 'package:chronospin/features/history/presentation/providers/history_providers.dart';
 import 'package:chronospin/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chronospin/core/theme/app_theme.dart';
@@ -167,132 +168,14 @@ class ProfilePage extends ConsumerWidget {
               const SizedBox(height: 20),
 
               // 3. Recent Performance Graph
-              Container(
-                height: 200,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Ao100: 7.45s",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            "-0.3s",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: LineChart(
-                        LineChartData(
-                          gridData: const FlGridData(show: false),
-                          titlesData: const FlTitlesData(show: false),
-                          borderData: FlBorderData(show: false),
-                          lineBarsData: [
-                            LineChartBarData(
-                              spots: const [
-                                FlSpot(0, 10),
-                                FlSpot(1, 9.5),
-                                FlSpot(2, 9),
-                                FlSpot(3, 8.5),
-                                FlSpot(4, 7.8),
-                                FlSpot(5, 7.45),
-                              ],
-                              isCurved: true,
-                              color: accentColor,
-                              barWidth: 3,
-                              isStrokeCapRound: true,
-                              belowBarData: BarAreaData(
-                                show: true,
-                                color: accentColor.withOpacity(0.1),
-                              ),
-                              dotData: const FlDotData(show: false),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const _PerformanceGraph(),
 
               const SizedBox(height: 20),
 
-              // 4. Activity Heatmap (Visual Placeholder)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "ACTIVITY HEATMAP",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "LAST 90 DAYS",
-                          style: TextStyle(color: Colors.grey, fontSize: 10),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Simple grid of boxes
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: List.generate(84, (index) {
-                        return Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: accentColor.withOpacity(
-                              (index % 5) * 0.2 + 0.1,
-                            ),
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        );
-                      }),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 20),
+
+              // 4. Activity Heatmap
+              const _ActivityHeatmap(),
 
               const SizedBox(height: 24),
               const Text(
@@ -498,6 +381,312 @@ class _ThemeCircle extends StatelessWidget {
         color: color,
         shape: BoxShape.circle,
         border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+      ),
+    );
+  }
+}
+
+class _PerformanceGraph extends ConsumerStatefulWidget {
+  const _PerformanceGraph();
+
+  @override
+  ConsumerState<_PerformanceGraph> createState() => _PerformanceGraphState();
+}
+
+class _PerformanceGraphState extends ConsumerState<_PerformanceGraph> {
+  bool _showAo100 = true; // Default to Ao100
+
+  // Helper from history_providers.dart ideally or duplicated
+  String formatTime(num millis) {
+    int totalMillis = millis.floor();
+    int min = (totalMillis ~/ 1000) ~/ 60;
+    int sec = (totalMillis ~/ 1000) % 60;
+    int centi = (totalMillis % 1000) ~/ 10;
+    if (min > 0)
+      return "$min:${sec.toString().padLeft(2, '0')}.${centi.toString().padLeft(2, '0')}";
+    return "$sec.${centi.toString().padLeft(2, '0')}";
+  }
+
+  double? calculateRawAverage(List<Solve> window) {
+    // Trim top/bottom 5%
+    if (window.isEmpty) return null;
+
+    int trimCount = (window.length * 0.05).ceil();
+
+    final times = window.map((s) {
+      if (s.penalty == Penalty.dnf) return 999999999;
+      return s.effectiveTime.inMilliseconds;
+    }).toList();
+    times.sort();
+
+    // Need at least enough solves to trim
+    if (times.length <= trimCount * 2) {
+      if (times.isEmpty) return null;
+      final sum = times.reduce((a, b) => a + b);
+      if (sum > 999999000) return null; // Contains DNF
+      return sum / times.length;
+    }
+
+    final validTimes = times.sublist(trimCount, times.length - trimCount);
+    final sum = validTimes.reduce((a, b) => a + b);
+    return sum / validTimes.length;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final history = ref.watch(historyProvider);
+    final themeState = ref.watch(themeProvider);
+    final accentColor = themeState.accent.color;
+
+    final int count = _showAo100 ? 100 : 50;
+
+    // Get last N solves (Newest first in history, take N, then reverse for graph chronological left-to-right)
+    final recentSolves = history.take(count).toList();
+    final chronologicalSolves = recentSolves.reversed.toList();
+
+    // Calculate Average for the Header
+    final double? currentAvg = calculateRawAverage(recentSolves);
+    final String avgDisplay = currentAvg != null ? formatTime(currentAvg) : "-";
+
+    // Prepare Spots
+    List<FlSpot> spots = [];
+    double minBytes = double.infinity;
+    double maxBytes = 0;
+
+    for (int i = 0; i < chronologicalSolves.length; i++) {
+      final s = chronologicalSolves[i];
+      if (s.penalty != Penalty.dnf) {
+        double sec = s.effectiveTime.inMilliseconds / 1000.0;
+        spots.add(FlSpot(i.toDouble(), sec));
+        if (sec < minBytes) minBytes = sec;
+        if (sec > maxBytes) maxBytes = sec;
+      }
+    }
+
+    // Safety for min/max
+    if (minBytes == double.infinity) minBytes = 0;
+    if (maxBytes == 0) maxBytes = 10;
+
+    return Container(
+      height: 250, // Slightly taller
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    "Ao$count: ",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    avgDisplay,
+                    style: TextStyle(
+                      color: accentColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              // Toggler
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Row(
+                  children: [
+                    _ToggleBtn(
+                      "50",
+                      !_showAo100,
+                      () => setState(() => _showAo100 = false),
+                      accentColor,
+                    ),
+                    Container(width: 1, height: 20, color: Colors.white10),
+                    _ToggleBtn(
+                      "100",
+                      _showAo100,
+                      () => setState(() => _showAo100 = true),
+                      accentColor,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          Expanded(
+            child: spots.isEmpty
+                ? const Center(
+                    child: Text(
+                      "Not enough data",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  )
+                : LineChart(
+                    LineChartData(
+                      gridData: const FlGridData(show: false),
+                      titlesData: const FlTitlesData(show: false),
+                      borderData: FlBorderData(show: false),
+                      minY: (minBytes * 0.9)
+                          .floorToDouble(), // Dynamic Range with some padding
+                      maxY: (maxBytes * 1.1).ceilToDouble(),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: spots,
+                          isCurved: true,
+                          curveSmoothness: 0.2, // Smoothness
+                          color: accentColor,
+                          barWidth: 2,
+                          isStrokeCapRound: true,
+                          dotData: const FlDotData(show: false),
+                          belowBarData: BarAreaData(
+                            show: true,
+                            gradient: LinearGradient(
+                              colors: [
+                                accentColor.withOpacity(0.2),
+                                accentColor.withOpacity(0.0),
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToggleBtn extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color activeColor;
+
+  const _ToggleBtn(this.label, this.isSelected, this.onTap, this.activeColor);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        color: isSelected ? activeColor.withOpacity(0.2) : Colors.transparent,
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? activeColor : Colors.grey,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActivityHeatmap extends ConsumerWidget {
+  const _ActivityHeatmap();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(historyProvider);
+    final themeState = ref.watch(themeProvider);
+    final accentColor = themeState.accent.color;
+
+    // 1. Process Data
+    final Map<String, int> density = {};
+    for (final solve in history) {
+      final key =
+          "${solve.timestamp.year}-${solve.timestamp.month.toString().padLeft(2, '0')}-${solve.timestamp.day.toString().padLeft(2, '0')}";
+      density[key] = (density[key] ?? 0) + 1;
+    }
+
+    // 2. Generate last 91 days
+    final now = DateTime.now();
+    final days = List.generate(91, (index) {
+      return now.subtract(Duration(days: 90 - index));
+    });
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "ACTIVITY HEATMAP",
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              Text(
+                "LAST 90 DAYS",
+                style: TextStyle(color: Colors.grey, fontSize: 10),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: days.map((date) {
+              final key =
+                  "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+              final count = density[key] ?? 0;
+
+              double opacity = 0.1;
+              if (count > 0) {
+                opacity = 0.2 + (count / 20.0).clamp(0.0, 0.8);
+              }
+
+              return Tooltip(
+                message: "$count solves on $key",
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(opacity),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
       ),
     );
   }

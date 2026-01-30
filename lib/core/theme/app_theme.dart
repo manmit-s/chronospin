@@ -5,7 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 enum AppAccent {
   cyan(Color(0xFF00E5FF)),
   yellow(Color(0xFFFFEB3B)),
-  purple(Color(0xFFD500F9)),
   monochrome(Colors.white);
 
   final Color color;
