@@ -1,4 +1,5 @@
 import 'package:chronospin/features/profile/presentation/providers/profile_providers.dart';
+import 'package:chronospin/core/theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,9 +10,15 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileImage = ref.watch(profileImageProvider);
+    final themeState = ref.watch(themeProvider);
+    final accentColor = themeState.accent.color;
 
     return Scaffold(
       backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text("Profile"),
+        backgroundColor: Colors.transparent,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
@@ -46,7 +53,7 @@ class ProfilePage extends ConsumerWidget {
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   border: Border.all(
-                                    color: Colors.yellowAccent,
+                                    color: accentColor,
                                     width: 2,
                                   ),
                                 ),
@@ -90,8 +97,8 @@ class ProfilePage extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
-                    Text(
+                    const SizedBox(height: 16),
+                    const Text(
                       "SpeedCuber99",
                       style: TextStyle(
                         fontSize: 24,
@@ -99,24 +106,24 @@ class ProfilePage extends ConsumerWidget {
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Chip(
-                      label: Text(
+                      label: const Text(
                         "PRO MEMBER",
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      backgroundColor: Color(0xFF1E1E1E),
-                      labelStyle: TextStyle(color: Colors.yellowAccent),
-                      avatar: Icon(
+                      backgroundColor: const Color(0xFF1E1E1E),
+                      labelStyle: const TextStyle(color: Colors.greenAccent),
+                      avatar: const Icon(
                         Icons.verified,
                         size: 14,
-                        color: Colors.yellowAccent,
+                        color: Colors.greenAccent,
                       ),
                       side: BorderSide.none,
-                      shape: StadiumBorder(),
+                      shape: const StadiumBorder(),
                     ),
                   ],
                 ),
@@ -136,16 +143,16 @@ class ProfilePage extends ConsumerWidget {
                   _StatCard(
                     title: "TOTAL SOLVES",
                     value: "12,450",
-                    accent: Colors.yellowAccent,
+                    accent: accentColor,
                   ),
                   _StatCard(
                     title: "PB (SINGLE)",
                     value: "5.67s",
                     icon: Icons.emoji_events,
-                    accent: Colors.yellowAccent,
+                    accent: accentColor,
                   ),
-                  _StatCard(title: "Ao5", value: "7.12s"),
-                  _StatCard(title: "Ao12", value: "8.05s"),
+                  const _StatCard(title: "Ao5", value: "7.12s"),
+                  const _StatCard(title: "Ao12", value: "8.05s"),
                 ],
               ),
 
@@ -211,12 +218,12 @@ class ProfilePage extends ConsumerWidget {
                                 FlSpot(5, 7.45),
                               ],
                               isCurved: true,
-                              color: Colors.yellowAccent,
+                              color: accentColor,
                               barWidth: 3,
                               isStrokeCapRound: true,
                               belowBarData: BarAreaData(
                                 show: true,
-                                color: Colors.yellowAccent.withOpacity(0.1),
+                                color: accentColor.withOpacity(0.1),
                               ),
                               dotData: const FlDotData(show: false),
                             ),
@@ -267,7 +274,7 @@ class ProfilePage extends ConsumerWidget {
                           width: 10,
                           height: 10,
                           decoration: BoxDecoration(
-                            color: Colors.yellowAccent.withOpacity(
+                            color: accentColor.withOpacity(
                               (index % 5) * 0.2 + 0.1,
                             ),
                             borderRadius: BorderRadius.circular(2),
@@ -309,16 +316,21 @@ class ProfilePage extends ConsumerWidget {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                        // Dynamic Theme Circles
                         Row(
-                          children: const [
-                            _ThemeCircle(
-                              color: Colors.yellowAccent,
-                              isSelected: true,
-                            ),
-                            _ThemeCircle(color: Colors.blueAccent),
-                            _ThemeCircle(color: Colors.redAccent),
-                            _ThemeCircle(color: Colors.grey),
-                          ],
+                          children: AppAccent.values.map((accent) {
+                            return GestureDetector(
+                              onTap: () {
+                                ref
+                                    .read(themeProvider.notifier)
+                                    .setAccent(accent);
+                              },
+                              child: _ThemeCircle(
+                                color: accent.color,
+                                isSelected: themeState.accent == accent,
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
@@ -368,8 +380,12 @@ class ProfilePage extends ConsumerWidget {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.yellowAccent,
-                        foregroundColor: Colors.black,
+                        backgroundColor: accentColor,
+                        foregroundColor:
+                            themeState.accent == AppAccent.yellow ||
+                                themeState.accent == AppAccent.monochrome
+                            ? Colors.black
+                            : Colors.white,
                         shape: const StadiumBorder(),
                       ),
                       onPressed: () {},
@@ -427,7 +443,7 @@ class _StatCard extends StatelessWidget {
               if (icon != null)
                 Icon(
                   icon,
-                  color: Colors.yellowAccent.withOpacity(0.5),
+                  color: (accent ?? Colors.yellowAccent).withOpacity(0.5),
                   size: 16,
                 ),
             ],

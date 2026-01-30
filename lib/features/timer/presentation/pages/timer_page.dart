@@ -87,6 +87,7 @@ class _TimerPageState extends ConsumerState<TimerPage> {
   @override
   Widget build(BuildContext context) {
     final currentScramble = ref.watch(scrambleProvider);
+    final themeAccent = ref.watch(themeProvider).accent.color;
 
     return Scaffold(
       backgroundColor: Colors.black, // Ensure pure black
@@ -171,10 +172,10 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                                 onTap: () {
                                   ref.invalidate(scrambleProvider);
                                 },
-                                child: const Icon(
+                                child: Icon(
                                   Icons.refresh,
                                   size: 20,
-                                  color: Colors.yellowAccent,
+                                  color: themeAccent,
                                 ),
                               ),
                             ],

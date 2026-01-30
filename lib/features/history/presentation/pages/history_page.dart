@@ -66,17 +66,9 @@ class HistoryPage extends ConsumerWidget {
               children: [
                 _buildStatColumn("PB", stats["PB"] ?? '-', themeAccent),
                 _buildContainerLine(),
-                _buildStatColumn(
-                  "Ao5",
-                  stats["Ao5"] ?? '-',
-                  Colors.greenAccent,
-                ),
+                _buildStatColumn("Ao5", stats["Ao5"] ?? '-', themeAccent),
                 _buildContainerLine(),
-                _buildStatColumn(
-                  "Ao12",
-                  stats["Ao12"] ?? '-',
-                  Colors.orangeAccent,
-                ),
+                _buildStatColumn("Ao12", stats["Ao12"] ?? '-', themeAccent),
                 _buildContainerLine(),
                 _buildStatColumn("Count", stats["Count"] ?? '0', Colors.white),
               ],
