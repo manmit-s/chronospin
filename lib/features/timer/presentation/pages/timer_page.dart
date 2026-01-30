@@ -86,6 +86,8 @@ class _TimerPageState extends ConsumerState<TimerPage> {
 
   @override
   Widget build(BuildContext context) {
+    final timerState = ref.watch(timerStateProvider);
+    final isRunning = timerState == TimerState.running;
     final currentScramble = ref.watch(scrambleProvider);
     final themeAccent = ref.watch(themeProvider).accent.color;
 
@@ -102,110 +104,118 @@ class _TimerPageState extends ConsumerState<TimerPage> {
             Column(
               children: [
                 // Top Section
-                SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      children: [
-                        // Row 1: Profile & Settings
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isRunning ? 0.0 : 1.0,
+                  child: IgnorePointer(
+                    ignoring: isRunning,
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
                           children: [
-                            CircleAvatar(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).cardTheme.color,
-                              child: const Icon(
-                                Icons.settings,
-                                color: Colors.grey,
+                            // Row 1: Profile & Settings
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).cardTheme.color,
+                                  child: const Icon(
+                                    Icons.settings,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const ProfilePage(),
+                                      ),
+                                    );
+                                  },
+                                  child: CircleAvatar(
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).cardTheme.color,
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 20),
+                            // Row 2: Scramble Text
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E1E1E),
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      currentScramble,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontFamily: 'monospace',
+                                        fontSize: 18,
+                                        color: Colors.white70,
+                                        letterSpacing: 1.2,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  InkWell(
+                                    onTap: () {
+                                      ref.invalidate(scrambleProvider);
+                                    },
+                                    child: Icon(
+                                      Icons.refresh,
+                                      size: 20,
+                                      color: themeAccent,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ProfilePage(),
-                                  ),
-                                );
-                              },
-                              child: CircleAvatar(
-                                backgroundColor: Theme.of(
-                                  context,
-                                ).cardTheme.color,
-                                child: const Icon(
-                                  Icons.person,
-                                  color: Colors.grey,
+                            const SizedBox(height: 20),
+                            // Scramble Net Placeholder
+                            Container(
+                              height: 140,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                // color: const Color(0xFF101010),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.2),
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              alignment: Alignment.topCenter,
+                              padding: const EdgeInsets.only(top: 8),
+                              child: Text(
+                                "SCRAMBLE NET",
+                                style: TextStyle(
+                                  color: Colors.grey.withOpacity(0.3),
+                                  fontSize: 10,
+                                  letterSpacing: 2,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
-                        // Row 2: Scramble Text
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 12,
-                            horizontal: 16,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E1E1E),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  currentScramble,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontFamily: 'monospace',
-                                    fontSize: 18,
-                                    color: Colors.white70,
-                                    letterSpacing: 1.2,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              InkWell(
-                                onTap: () {
-                                  ref.invalidate(scrambleProvider);
-                                },
-                                child: Icon(
-                                  Icons.refresh,
-                                  size: 20,
-                                  color: themeAccent,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        // Scramble Net Placeholder
-                        Container(
-                          height: 140,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            // color: const Color(0xFF101010),
-                            border: Border.all(
-                              color: Colors.grey.withOpacity(0.2),
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          alignment: Alignment.topCenter,
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            "SCRAMBLE NET",
-                            style: TextStyle(
-                              color: Colors.grey.withOpacity(0.3),
-                              fontSize: 10,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -222,104 +232,122 @@ class _TimerPageState extends ConsumerState<TimerPage> {
             Positioned(
               left: 20,
               bottom: 180,
-              child: FloatingActionButton.small(
-                heroTag: "history",
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HistoryPage(),
-                    ),
-                  );
-                },
-                backgroundColor: const Color(0xFF1E1E1E),
-                foregroundColor: Colors.white,
-                child: const Icon(Icons.history),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isRunning ? 0.0 : 1.0,
+                child: IgnorePointer(
+                  ignoring: isRunning,
+                  child: FloatingActionButton.small(
+                    heroTag: "history",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HistoryPage(),
+                        ),
+                      );
+                    },
+                    backgroundColor: const Color(0xFF1E1E1E),
+                    foregroundColor: Colors.white,
+                    child: const Icon(Icons.history),
+                  ),
+                ),
               ),
             ),
 
             // Bottom Stats Sheet
             Align(
               alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.only(bottom: 30),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF121212),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const SizedBox(height: 12),
-                    // Handle
-                    Container(
-                      height: 4,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(2),
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: isRunning ? 0.0 : 1.0,
+                child: IgnorePointer(
+                  ignoring: isRunning,
+                  child: GestureDetector(
+                    onTap: () {}, // Absorb taps to prevent timer interaction
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.only(bottom: 30),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF121212),
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(30),
+                          topRight: Radius.circular(30),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 12),
+                          // Handle
+                          Container(
+                            height: 4,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[800],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Quick Stats Heading (Non-clickable)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text(
+                                "QUICK STATS",
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                  letterSpacing: 1.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.bar_chart,
+                                size: 16,
+                                color: Colors.grey[600],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Stats Row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Consumer(
+                                builder: (context, ref, child) {
+                                  final stats = ref.watch(sessionStatsProvider);
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _StatItem(
+                                        label: "PB",
+                                        value: stats['PB'] ?? '-',
+                                      ),
+                                      const SizedBox(
+                                        width: 20,
+                                      ), // Spacing manually since we are inside a Row inside a Row
+                                      _StatItem(
+                                        label: "Ao5",
+                                        value: stats['Ao5'] ?? '-',
+                                      ),
+                                      const SizedBox(width: 20),
+                                      _StatItem(
+                                        label: "Ao12",
+                                        value: stats['Ao12'] ?? '-',
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    // Quick Stats Heading (Non-clickable)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "QUICK STATS",
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
-                            letterSpacing: 1.5,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.bar_chart,
-                          size: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Stats Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Consumer(
-                          builder: (context, ref, child) {
-                            final stats = ref.watch(sessionStatsProvider);
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                _StatItem(
-                                  label: "PB",
-                                  value: stats['PB'] ?? '-',
-                                ),
-                                const SizedBox(
-                                  width: 20,
-                                ), // Spacing manually since we are inside a Row inside a Row
-                                _StatItem(
-                                  label: "Ao5",
-                                  value: stats['Ao5'] ?? '-',
-                                ),
-                                const SizedBox(width: 20),
-                                _StatItem(
-                                  label: "Ao12",
-                                  value: stats['Ao12'] ?? '-',
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
