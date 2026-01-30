@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:chronospin/features/history/domain/solve.dart';
 import 'package:chronospin/features/history/presentation/providers/history_providers.dart';
 import 'package:chronospin/features/profile/presentation/providers/profile_providers.dart';
@@ -507,6 +506,7 @@ class _PerformanceGraphState extends ConsumerState<_PerformanceGraph> {
 
               // Toggler
               Container(
+                clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(8),
