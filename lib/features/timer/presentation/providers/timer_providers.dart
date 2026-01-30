@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cuber/cuber.dart';
 
 // Generates a random scramble
 final scrambleProvider = StateProvider<String>((ref) {

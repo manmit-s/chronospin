@@ -1,5 +1,7 @@
 import 'package:chronospin/core/theme/app_theme.dart';
 import 'package:chronospin/features/history/presentation/pages/history_page.dart';
+import 'package:chronospin/features/history/presentation/providers/history_providers.dart';
+import 'package:chronospin/features/history/domain/solve.dart';
 import 'package:chronospin/features/profile/presentation/pages/profile_page.dart';
 import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
 import 'package:chronospin/features/timer/presentation/widgets/timer_display.dart';
@@ -42,15 +44,28 @@ class _TimerPageState extends ConsumerState<TimerPage> {
   void _handleTap() {
     if (ref.read(timerStateProvider) == TimerState.running) {
       // Stop Timer
-      ref.read(stopWatchProvider).stop();
+      final stopwatch = ref.read(stopWatchProvider);
+      stopwatch.stop();
       _ticker?.cancel();
       ref.read(timerStateProvider.notifier).setStopped();
-      // Record time here (TODO)
-      // reset to idle after delay or tap?
+
+      // Record time
+      final elapsed = stopwatch.elapsed;
+      final scramble = ref.read(scrambleProvider);
+
+      final solve = Solve(
+        time: elapsed,
+        scramble: scramble,
+        timestamp: DateTime.now(),
+      );
+
+      ref.read(historyProvider.notifier).addSolve(solve);
     } else if (ref.read(timerStateProvider) == TimerState.stopped) {
       ref.read(timerStateProvider.notifier).setIdle();
       ref.read(elapsedTimeProvider.notifier).state = Duration.zero;
-      // Generate new scramble here (TODO)
+
+      // Generate new scramble
+      ref.invalidate(scrambleProvider);
     }
   }
 
@@ -96,6 +111,15 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            CircleAvatar(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).cardTheme.color,
+                              child: const Icon(
+                                Icons.settings,
+                                color: Colors.grey,
+                              ),
+                            ),
                             InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -113,15 +137,6 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                                   Icons.person,
                                   color: Colors.grey,
                                 ),
-                              ),
-                            ),
-                            CircleAvatar(
-                              backgroundColor: Theme.of(
-                                context,
-                              ).cardTheme.color,
-                              child: const Icon(
-                                Icons.settings,
-                                color: Colors.grey,
                               ),
                             ),
                           ],
@@ -297,9 +312,32 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        _StatItem(label: "PB", value: "9.85"),
-                        _StatItem(label: "Ao5", value: "14.10"),
-                        _StatItem(label: "Ao12", value: "14.45"),
+                        Consumer(
+                          builder: (context, ref, child) {
+                            final stats = ref.watch(sessionStatsProvider);
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _StatItem(
+                                  label: "PB",
+                                  value: stats['PB'] ?? '-',
+                                ),
+                                const SizedBox(
+                                  width: 20,
+                                ), // Spacing manually since we are inside a Row inside a Row
+                                _StatItem(
+                                  label: "Ao5",
+                                  value: stats['Ao5'] ?? '-',
+                                ),
+                                const SizedBox(width: 20),
+                                _StatItem(
+                                  label: "Ao12",
+                                  value: stats['Ao12'] ?? '-',
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ],

@@ -64,13 +64,21 @@ class HistoryPage extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatColumn("Mean", stats["Mean"]!, themeAccent),
+                _buildStatColumn("PB", stats["PB"] ?? '-', themeAccent),
                 _buildContainerLine(),
-                _buildStatColumn("Best", stats["Best"]!, Colors.greenAccent),
+                _buildStatColumn(
+                  "Ao5",
+                  stats["Ao5"] ?? '-',
+                  Colors.greenAccent,
+                ),
                 _buildContainerLine(),
-                _buildStatColumn("Worst", stats["Worst"]!, Colors.redAccent),
+                _buildStatColumn(
+                  "Ao12",
+                  stats["Ao12"] ?? '-',
+                  Colors.orangeAccent,
+                ),
                 _buildContainerLine(),
-                _buildStatColumn("Count", stats["Count"]!, Colors.white),
+                _buildStatColumn("Count", stats["Count"] ?? '0', Colors.white),
               ],
             ),
           ),

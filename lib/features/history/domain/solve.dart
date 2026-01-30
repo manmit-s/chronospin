@@ -43,4 +43,29 @@ class Solve {
       notes: notes ?? this.notes,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'time': time.inMilliseconds,
+      'scramble': scramble,
+      'timestamp': timestamp.toIso8601String(),
+      'penalty': penalty.name,
+      'notes': notes ?? '',
+    };
+  }
+
+  factory Solve.fromMap(Map<String, dynamic> map) {
+    return Solve(
+      id: map['id'],
+      time: Duration(milliseconds: map['time']),
+      scramble: map['scramble'],
+      timestamp: DateTime.parse(map['timestamp']),
+      penalty: Penalty.values.firstWhere(
+        (e) => e.name == map['penalty'],
+        orElse: () => Penalty.none,
+      ),
+      notes: map['notes'] == '' ? null : map['notes'],
+    );
+  }
 }
