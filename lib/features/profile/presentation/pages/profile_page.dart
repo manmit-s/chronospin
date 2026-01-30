@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:chronospin/features/history/domain/solve.dart';
 import 'package:chronospin/features/history/presentation/providers/history_providers.dart';
 import 'package:chronospin/features/profile/presentation/providers/profile_providers.dart';
@@ -607,16 +609,60 @@ class _ToggleBtn extends StatelessWidget {
   }
 }
 
-class _ActivityHeatmap extends ConsumerWidget {
+class _ActivityHeatmap extends ConsumerStatefulWidget {
   const _ActivityHeatmap();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ActivityHeatmap> createState() => _ActivityHeatmapState();
+}
+
+class _ActivityHeatmapState extends ConsumerState<_ActivityHeatmap> {
+  OverlayEntry? _overlayEntry;
+  Timer? _timer;
+
+  void _showQuickGlance(
+    BuildContext context,
+    Offset globalPosition,
+    String text,
+  ) {
+    _removeOverlay();
+
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: globalPosition.dy - 40,
+        left: globalPosition.dx - 50,
+        child: Material(
+          color: Colors.transparent,
+          child: _FadingTooltip(text: text),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+
+    _timer = Timer(const Duration(milliseconds: 1500), () {
+      _removeOverlay();
+    });
+  }
+
+  void _removeOverlay() {
+    _timer?.cancel();
+    _overlayEntry?.remove();
+    _overlayEntry = null;
+  }
+
+  @override
+  void dispose() {
+    _removeOverlay();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final history = ref.watch(historyProvider);
     final themeState = ref.watch(themeProvider);
     final accentColor = themeState.accent.color;
 
-    // 1. Process Data
     final Map<String, int> density = {};
     for (final solve in history) {
       final key =
@@ -624,7 +670,6 @@ class _ActivityHeatmap extends ConsumerWidget {
       density[key] = (density[key] ?? 0) + 1;
     }
 
-    // 2. Generate last 91 days
     final now = DateTime.now();
     final days = List.generate(91, (index) {
       return now.subtract(Duration(days: 90 - index));
@@ -668,13 +713,26 @@ class _ActivityHeatmap extends ConsumerWidget {
                   "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
               final count = density[key] ?? 0;
 
-              double opacity = 0.1;
-              if (count > 0) {
-                opacity = 0.2 + (count / 20.0).clamp(0.0, 0.8);
+              double opacity = 0.1; // Base/Empty
+              if (count > 60) {
+                opacity = 1.0;
+              } else if (count > 40) {
+                opacity = 0.7;
+              } else if (count > 10) {
+                opacity = 0.5;
+              } else if (count > 0) {
+                opacity = 0.3;
               }
 
-              return Tooltip(
-                message: "$count solves on $key",
+              return GestureDetector(
+                onTapUp: (details) {
+                  final dateStr = "${date.day}/${date.month}";
+                  _showQuickGlance(
+                    context,
+                    details.globalPosition,
+                    "$dateStr: $count solves",
+                  );
+                },
                 child: Container(
                   width: 10,
                   height: 10,
@@ -687,6 +745,74 @@ class _ActivityHeatmap extends ConsumerWidget {
             }).toList(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FadingTooltip extends StatefulWidget {
+  final String text;
+  const _FadingTooltip({required this.text});
+
+  @override
+  State<_FadingTooltip> createState() => _FadingTooltipState();
+}
+
+class _FadingTooltipState extends State<_FadingTooltip>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+
+    _opacity = _controller.drive(
+      TweenSequence([
+        TweenSequenceItem(
+          tween: Tween(begin: 0.0, end: 1.0),
+          weight: 10,
+        ), // Fade In
+        TweenSequenceItem(tween: ConstantTween(1.0), weight: 70), // Stay
+        TweenSequenceItem(
+          tween: Tween(begin: 1.0, end: 0.0),
+          weight: 20,
+        ), // Fade Out
+      ]),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black87,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Text(
+          widget.text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
