@@ -228,6 +228,19 @@ class HistoryPage extends ConsumerWidget {
                                     ),
                                   ),
                                 ),
+
+                              // Note Indicator
+                              if (solve.notes != null &&
+                                  solve.notes!.isNotEmpty)
+                                Positioned(
+                                  bottom: 8,
+                                  left: 8,
+                                  child: Icon(
+                                    Icons.comment,
+                                    size: 10,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
                             ],
                           ),
                         ),
@@ -470,10 +483,15 @@ class _SolveDetailsContentState extends ConsumerState<_SolveDetailsContent> {
               Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.comment, color: Colors.grey),
-                    onPressed: () {
-                      // TODO: Edit Notes
-                    },
+                    icon: Icon(
+                      Icons.comment,
+                      color:
+                          currentSolve.notes != null &&
+                              currentSolve.notes!.isNotEmpty
+                          ? widget.accentColor
+                          : Colors.grey,
+                    ),
+                    onPressed: () => _editNote(context, currentSolve),
                   ),
                   IconButton(
                     icon: const Icon(
@@ -490,6 +508,66 @@ class _SolveDetailsContentState extends ConsumerState<_SolveDetailsContent> {
                 ],
               ),
             ],
+          ),
+
+          if (currentSolve.notes != null && currentSolve.notes!.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.black26,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.white10),
+              ),
+              child: Text(
+                currentSolve.notes!,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  void _editNote(BuildContext context, Solve solve) {
+    final controller = TextEditingController(text: solve.notes);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        title: const Text("Edit Note", style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: "Enter note...",
+            hintStyle: TextStyle(color: Colors.grey),
+            enabledBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.grey),
+            ),
+            focusedBorder: UnderlineInputBorder(
+              borderSide: BorderSide(color: Colors.white),
+            ),
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () {
+              final text = controller.text.trim();
+              _updateSolve(solve.copyWith(notes: text.isEmpty ? null : text));
+              Navigator.pop(context);
+            },
+            child: Text("Save", style: TextStyle(color: widget.accentColor)),
           ),
         ],
       ),
