@@ -153,3 +153,114 @@ final sessionStatsProvider = Provider<Map<String, String>>((ref) {
     "Count": validSolves.length.toString(),
   };
 });
+
+final profileStatsProvider = Provider<Map<String, String>>((ref) {
+  final history = ref.watch(historyProvider);
+  if (history.isEmpty) {
+    return {"Total": "0", "PB": "-", "BestAo5": "-", "BestAo12": "-"};
+  }
+
+  String formatTime(num millis) {
+    int totalMillis = millis.floor();
+    int min = (totalMillis ~/ 1000) ~/ 60;
+    int sec = (totalMillis ~/ 1000) % 60;
+    int centi = (totalMillis % 1000) ~/ 10;
+
+    if (min > 0) {
+      return "$min:${sec.toString().padLeft(2, '0')}.${centi.toString().padLeft(2, '0')}";
+    }
+    return "$sec.${centi.toString().padLeft(2, '0')}";
+  }
+
+  double? calculateRawAverage(List<Solve> window) {
+    // If any DNF, it counts as worst.
+    // If > 1 DNF in Ao5 => DNF.
+    // If > 1 DNF in Ao12 => DNF.
+    // Standard WCA regulation: remove 1 best, 1 worst.
+
+    int dnfCount = window.where((s) => s.penalty == Penalty.dnf).length;
+
+    // For Ao5, >1 DNF is DNF.
+    if (window.length == 5 && dnfCount > 1) return null;
+    // For Ao12, >1 DNF is DNF.
+    if (window.length == 12 && dnfCount > 1) return null;
+
+    final times = window.map((s) {
+      if (s.penalty == Penalty.dnf)
+        return 999999999; // Very large number for sorting
+      return s.effectiveTime.inMilliseconds;
+    }).toList();
+
+    times.sort();
+
+    // Remove Best and Worst
+    // (If DNF was present, it's at the end (worst))
+    // (If multiple DNFs were allowed (e.g. Ao100), they would all be at end)
+
+    final validTimes = times.sublist(1, times.length - 1);
+    final sum = validTimes.reduce((a, b) => a + b);
+    return sum / validTimes.length;
+  }
+
+  // 1. Total Solves
+  final total = history.length.toString();
+
+  // 2. PB Single (Lowest non-DNF)
+  String pb = "-";
+  final validSolves = history.where((s) => s.penalty != Penalty.dnf).toList();
+  if (validSolves.isNotEmpty) {
+    final times = validSolves
+        .map((s) => s.effectiveTime.inMilliseconds)
+        .toList();
+    times.sort();
+    pb = formatTime(times.first);
+  }
+
+  // 3. Best Ao5
+  String bestAo5 = "-";
+  if (history.length >= 5) {
+    double minAvg = double.infinity;
+    bool found = false;
+
+    // Iterate windows. History is [Newest ... Oldest].
+    // Usually best Ao5 is calculated from chronological sequence.
+    // Since we just slice windows of 5, order (asc/desc) doesn't change adjacency,
+    // just the direction we slide.
+    // history[0..4] is the *latest* Ao5. history[1..5] is the one before that.
+
+    for (int i = 0; i <= history.length - 5; i++) {
+      final window = history.sublist(i, i + 5);
+      final avg = calculateRawAverage(window);
+      if (avg != null && avg < minAvg) {
+        minAvg = avg;
+        found = true;
+      }
+    }
+
+    if (found) {
+      bestAo5 = formatTime(minAvg);
+    }
+  }
+
+  // 4. Best Ao12
+  String bestAo12 = "-";
+  if (history.length >= 12) {
+    double minAvg = double.infinity;
+    bool found = false;
+
+    for (int i = 0; i <= history.length - 12; i++) {
+      final window = history.sublist(i, i + 12);
+      final avg = calculateRawAverage(window);
+      if (avg != null && avg < minAvg) {
+        minAvg = avg;
+        found = true;
+      }
+    }
+
+    if (found) {
+      bestAo12 = formatTime(minAvg);
+    }
+  }
+
+  return {"Total": total, "PB": pb, "BestAo5": bestAo5, "BestAo12": bestAo12};
+});

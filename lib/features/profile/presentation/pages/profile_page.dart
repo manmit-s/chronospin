@@ -1,3 +1,4 @@
+import 'package:chronospin/features/history/presentation/providers/history_providers.dart';
 import 'package:chronospin/features/profile/presentation/providers/profile_providers.dart';
 import 'package:chronospin/core/theme/app_theme.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -12,6 +13,7 @@ class ProfilePage extends ConsumerWidget {
     final profileImage = ref.watch(profileImageProvider);
     final themeState = ref.watch(themeProvider);
     final accentColor = themeState.accent.color;
+    final stats = ref.watch(profileStatsProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -142,17 +144,23 @@ class ProfilePage extends ConsumerWidget {
                 children: [
                   _StatCard(
                     title: "TOTAL SOLVES",
-                    value: "12,450",
+                    value: stats["Total"] ?? "0",
                     accent: accentColor,
                   ),
                   _StatCard(
                     title: "PB (SINGLE)",
-                    value: "5.67s",
+                    value: stats["PB"] ?? "-",
                     icon: Icons.emoji_events,
                     accent: accentColor,
                   ),
-                  const _StatCard(title: "Ao5", value: "7.12s"),
-                  const _StatCard(title: "Ao12", value: "8.05s"),
+                  _StatCard(
+                    title: "Ao5 (BEST)",
+                    value: stats["BestAo5"] ?? "-",
+                  ),
+                  _StatCard(
+                    title: "Ao12 (BEST)",
+                    value: stats["BestAo12"] ?? "-",
+                  ),
                 ],
               ),
 
