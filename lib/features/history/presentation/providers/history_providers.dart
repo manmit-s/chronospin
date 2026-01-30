@@ -75,20 +75,26 @@ final sessionStatsProvider = Provider<Map<String, String>>((ref) {
     return {"PB": "-", "Ao5": "-", "Ao12": "-"};
   }
 
+  // Helper to format time consistent with UI (truncating to 2 decimals)
+  String formatTime(num millis) {
+    int totalMillis = millis.floor();
+    int min = (totalMillis ~/ 1000) ~/ 60;
+    int sec = (totalMillis ~/ 1000) % 60;
+    int centi = (totalMillis % 1000) ~/ 10;
+
+    if (min > 0) {
+      return "$min:${sec.toString().padLeft(2, '0')}.${centi.toString().padLeft(2, '0')}";
+    }
+    return "$sec.${centi.toString().padLeft(2, '0')}";
+  }
+
   // Helper to calculate Average
   // "Trimmed Average": Remove best and worst, average the rest
   String calculateAverage(List<int> times) {
     if (times.isEmpty) return "-";
-    // For proper Ao5/Ao12, we need exact count (5 or 12)
-    // But usually in timers, if you have 5 solves, you show Ao5.
 
     // Sort to find best/worst
     final sorted = List<int>.from(times)..sort();
-
-    // Standard rule: remove top 5% and bottom 5% (rounded up)
-    // For Ao5: remove 1 best, 1 worst (count 5)
-    // For Ao12: remove 1 best, 1 worst (count 12)
-    // Using simplified logic here: remove min and max if length >= 3
 
     int sum = 0;
     int count = 0;
@@ -104,11 +110,10 @@ final sessionStatsProvider = Provider<Map<String, String>>((ref) {
     }
 
     double avg = sum / count;
-    return (avg / 1000).toStringAsFixed(2);
+    return formatTime(avg);
   }
 
   // Get valid times (excluding DNF)
-  // TODO: Handle DNF properly in averages (usually counts as worst)
   final validSolves = history.where((s) => s.penalty != Penalty.dnf).toList();
 
   String pb = "-";
@@ -121,13 +126,9 @@ final sessionStatsProvider = Provider<Map<String, String>>((ref) {
         .map((s) => s.effectiveTime.inMilliseconds)
         .toList();
     times.sort();
-    pb = (times.first / 1000).toStringAsFixed(2);
+    pb = formatTime(times.first);
 
     // Recent solves for Averages (take from top since history is [newest, ...])
-    // history has newest first.
-    // For Ao5, we need the last 5 solves added.
-    // Wait, history is usually reverse chronological? Yes, in addSolve we do [solve, ...state]
-
     if (history.length >= 5) {
       final last5 = history
           .take(5)
