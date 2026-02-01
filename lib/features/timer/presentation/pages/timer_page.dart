@@ -20,10 +20,23 @@ class TimerPage extends ConsumerStatefulWidget {
 
 class _TimerPageState extends ConsumerState<TimerPage> {
   Timer? _ticker;
+  Timer? _inspectionTicker; // Add inspection ticker
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _handleHoldStart() {
-    if (ref.read(timerStateProvider) == TimerState.idle) {
+    final state = ref.read(timerStateProvider);
+    final inspectionSettings = ref.read(inspectionSettingsProvider);
+
+    // If IDLE and Inspection is ENABLED, Hold does NOTHING (wait for tap)
+    if (state == TimerState.idle) {
+      if (!inspectionSettings.enabled) {
+        ref.read(timerStateProvider.notifier).setReady();
+        HapticFeedback.lightImpact();
+      }
+      // If enabled, do nothing. Must tap first.
+    }
+    // If we are currently INSPECTING, hold prepares the timer
+    else if (state == TimerState.inspection) {
       ref.read(timerStateProvider.notifier).setReady();
       HapticFeedback.lightImpact();
     }
@@ -33,18 +46,60 @@ class _TimerPageState extends ConsumerState<TimerPage> {
     final currentState = ref.read(timerStateProvider);
     if (currentState == TimerState.ready) {
       // Start Timer
+
+      // Stop inspection ticker if it was running
+      _inspectionTicker?.cancel();
+
       ref.read(timerStateProvider.notifier).setRunning();
       ref.read(stopWatchProvider).reset();
       ref.read(stopWatchProvider).start();
       _startTicker();
     } else {
       // Aborted hold
-      ref.read(timerStateProvider.notifier).setIdle();
+      // If we were inspecting, go back to inspection? Or Idle?
+      // Usually aborting a hold during inspection just keeps inspection running?
+      // But for simplicity, let's revert to previous state logic.
+      // If the user lifts finger early, they are effectively still inspecting if time remains.
+      // However, our notifier just has 'setIdle', 'setReady'.
+      // If we abort 'Ready', we need to check if we came from Inspection.
+
+      // Simplified: If we were ready, and we abort, we go back to IDLE (penalty/reset)
+      // OR back to inspection if time remains.
+      // The current implementation sets Idle. Let's keep it simple for now and set Idle used in _handleHoldEnd.
+      // But verify logic:
+      // If I am in Inspection -> Hold (Ready) -> Release Early (Not Ready).
+      // Ideally I should go back to Inspection.
+      // For now, let's just go to Idle to reset.
+
+      // If we were effectively in inspection (before ready was set), we are still in inspection.
+      // We only change to Ready on hold start.
+
+      final wasInspecting = _inspectionTicker?.isActive ?? false;
+      if (wasInspecting) {
+        ref.read(timerStateProvider.notifier).setInspection();
+      } else {
+        ref.read(timerStateProvider.notifier).setIdle();
+      }
     }
   }
 
   void _handleTap() {
-    if (ref.read(timerStateProvider) == TimerState.running) {
+    final state = ref.read(timerStateProvider);
+    final inspectionSettings = ref.read(inspectionSettingsProvider);
+
+    if (state == TimerState.idle) {
+      // Check for inspection
+      if (inspectionSettings.enabled) {
+        _startInspection();
+      }
+      // If not enabled, tap does nothing (must hold)
+    } else if (state == TimerState.inspection) {
+      // Tapping during inspection -> Abort/Reset?
+      // Usually acts as DNF or Reset.
+      _inspectionTicker?.cancel();
+      ref.read(timerStateProvider.notifier).setIdle();
+      ref.read(inspectionTimeProvider.notifier).state = 0;
+    } else if (state == TimerState.running) {
       // Stop Timer
       final stopwatch = ref.read(stopWatchProvider);
       stopwatch.stop();
@@ -62,13 +117,34 @@ class _TimerPageState extends ConsumerState<TimerPage> {
       );
 
       ref.read(historyProvider.notifier).addSolve(solve);
-    } else if (ref.read(timerStateProvider) == TimerState.stopped) {
+    } else if (state == TimerState.stopped) {
       ref.read(timerStateProvider.notifier).setIdle();
       ref.read(elapsedTimeProvider.notifier).state = Duration.zero;
 
       // Generate new scramble
       ref.invalidate(scrambleProvider);
     }
+  }
+
+  void _startInspection() {
+    ref.read(timerStateProvider.notifier).setInspection();
+    final duration = ref.read(inspectionSettingsProvider).duration;
+    ref.read(inspectionTimeProvider.notifier).state = duration;
+
+    _inspectionTicker?.cancel();
+    _inspectionTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      final current = ref.read(inspectionTimeProvider);
+      if (current > -2) {
+        // Allow going slightly negative to show +2/DNF logic if we wanted, or just stop at 0
+        ref.read(inspectionTimeProvider.notifier).state = current - 1;
+      } else {
+        // Time Over behavior?
+        // For now just keep counting down or stop.
+        // timer.cancel();
+        // optionally DNF?
+        ref.read(inspectionTimeProvider.notifier).state = current - 1;
+      }
+    });
   }
 
   void _startTicker() {
@@ -83,6 +159,7 @@ class _TimerPageState extends ConsumerState<TimerPage> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _inspectionTicker?.cancel();
     super.dispose();
   }
 

@@ -1,12 +1,15 @@
 import 'package:chronospin/features/algorithms/presentation/pages/algorithms_page.dart';
 import 'package:chronospin/features/timer/presentation/pages/timer_page.dart';
+import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final primaryColor = theme.primaryColor;
 
@@ -97,6 +100,93 @@ class AppDrawer extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const AlgorithmsPage()),
+              );
+            },
+          ),
+
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              "Timer Settings",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+            ),
+          ),
+
+          // Inspection Settings
+          Consumer(
+            builder: (context, ref, _) {
+              final settings = ref.watch(inspectionSettingsProvider);
+              return Column(
+                children: [
+                  SwitchListTile(
+                    title: const Text(
+                      "Inspection",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    subtitle: const Text(
+                      "Enable inspection time",
+                      style: TextStyle(color: Colors.grey, fontSize: 12),
+                    ),
+                    value: settings.enabled,
+                    onChanged: (val) {
+                      ref
+                          .read(inspectionSettingsProvider.notifier)
+                          .setEnabled(val);
+                    },
+                    activeColor: theme.primaryColor,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  ),
+                  if (settings.enabled)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          const Text(
+                            "Duration (s)",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          const Spacer(),
+                          SizedBox(
+                            width: 60,
+                            child: TextFormField(
+                              initialValue: settings.duration.toString(),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: const TextStyle(color: Colors.white),
+                              decoration: const InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                border: OutlineInputBorder(),
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: BorderSide(color: Colors.grey),
+                                ),
+                              ),
+                              onChanged: (val) {
+                                if (val.isNotEmpty) {
+                                  final duration = int.tryParse(val);
+                                  if (duration != null) {
+                                    ref
+                                        .read(
+                                          inspectionSettingsProvider.notifier,
+                                        )
+                                        .setDuration(duration);
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               );
             },
           ),

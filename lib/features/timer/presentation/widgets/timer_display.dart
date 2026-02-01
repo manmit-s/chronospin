@@ -11,6 +11,11 @@ class TimerDisplay extends ConsumerWidget {
     final duration = ref.watch(elapsedTimeProvider);
 
     String formattedTime = _formatTime(duration);
+    final inspectionTime = ref.watch(inspectionTimeProvider);
+
+    if (timerState == TimerState.inspection) {
+      formattedTime = inspectionTime.toString();
+    }
 
     Color timerColor = Colors.white;
     if (timerState == TimerState.ready) {
@@ -18,6 +23,8 @@ class TimerDisplay extends ConsumerWidget {
     }
     if (timerState == TimerState.running) {
       timerColor = Colors.white; // Or hidden if blind
+    } else if (timerState == TimerState.inspection) {
+      timerColor = Colors.orangeAccent;
     }
 
     return Column(

@@ -28,13 +28,14 @@ final scrambleProvider = StateProvider<String>((ref) {
   return scramble.join(" ");
 });
 
-// Holds the current state of the timer (0 = ready, 1 = running, 2 = stopped)
-enum TimerState { idle, ready, running, stopped }
+// Holds the current state of the timer
+enum TimerState { idle, inspection, ready, running, stopped }
 
 class TimerNotifier extends StateNotifier<TimerState> {
   TimerNotifier() : super(TimerState.idle);
 
   void setIdle() => state = TimerState.idle;
+  void setInspection() => state = TimerState.inspection;
   void setReady() => state = TimerState.ready;
   void setRunning() => state = TimerState.running;
   void setStopped() => state = TimerState.stopped;
@@ -49,3 +50,39 @@ final timerStateProvider = StateNotifierProvider<TimerNotifier, TimerState>((
 final stopWatchProvider = StateProvider<Stopwatch>((ref) => Stopwatch());
 
 final elapsedTimeProvider = StateProvider<Duration>((ref) => Duration.zero);
+
+// Inspection Settings
+class InspectionSettings {
+  final bool enabled;
+  final int duration;
+
+  const InspectionSettings({this.enabled = false, this.duration = 15});
+
+  InspectionSettings copyWith({bool? enabled, int? duration}) {
+    return InspectionSettings(
+      enabled: enabled ?? this.enabled,
+      duration: duration ?? this.duration,
+    );
+  }
+}
+
+class InspectionSettingsNotifier extends StateNotifier<InspectionSettings> {
+  InspectionSettingsNotifier() : super(const InspectionSettings());
+
+  void setEnabled(bool enabled) {
+    state = state.copyWith(enabled: enabled);
+  }
+
+  void setDuration(int duration) {
+    state = state.copyWith(duration: duration);
+  }
+}
+
+final inspectionSettingsProvider =
+    StateNotifierProvider<InspectionSettingsNotifier, InspectionSettings>((
+      ref,
+    ) {
+      return InspectionSettingsNotifier();
+    });
+
+final inspectionTimeProvider = StateProvider<int>((ref) => 0);
