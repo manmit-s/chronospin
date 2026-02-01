@@ -37,35 +37,41 @@ class TimerDisplay extends ConsumerWidget {
       timerColor = Colors.orangeAccent;
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Stack(
+      alignment: Alignment.center,
+      clipBehavior: Clip.none, // Allow labels to paint outside if needed
       children: [
+        // Inspection Label - Transformed up
         if (timerState == TimerState.inspection)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
+          Transform.translate(
+            offset: const Offset(0, -60),
+            child: const Text(
               "INSPECTION",
               style: TextStyle(
-                color: Colors.orangeAccent, // Match inspection color
+                color: Colors.orangeAccent,
                 letterSpacing: 2.0,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
+
+        // Main Timer Digits - Centered anchor
         Text(
           formattedTime,
           style: TextStyle(
             fontSize: 80,
             fontWeight: FontWeight.w700,
-            fontFamily: 'Outfit', // Ensure font is loaded or use default
+            fontFamily: 'Outfit',
             color: timerColor,
             fontFeatures: const [FontFeature.tabularFigures()],
           ),
         ),
+
+        // Hold Label - Transformed down
         if (timerState == TimerState.idle)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
+          Transform.translate(
+            offset: const Offset(0, 60),
             child: Text(
               "HOLD TO START",
               style: TextStyle(

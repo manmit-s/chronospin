@@ -1,5 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+// Puzzle Types
+enum PuzzleType {
+  cube2x2('2x2 Cube'),
+  cube3x3('3x3 Cube'),
+  cube4x4('4x4 Cube');
+
+  final String label;
+  const PuzzleType(this.label);
+}
+
+final puzzleProvider = StateProvider<PuzzleType>((ref) => PuzzleType.cube3x3);
+
 // Generates a random scramble
 final scrambleProvider = StateProvider<String>((ref) {
   // Simple random scramble logic (or use Cuber's internal tools if available)
@@ -8,13 +20,30 @@ final scrambleProvider = StateProvider<String>((ref) {
   // Actually, for now, let's use a standard implementation or mock it if complex.
   // Let's try to generate ~20 random moves.
 
-  List<String> moves = ['R', 'L', 'U', 'D', 'F', 'B'];
-  List<String> modifiers = ['', "'", '2'];
-  List<String> scramble = [];
+  final puzzle = ref.watch(puzzleProvider);
 
+  List<String> moves = [];
+  int length = 20;
+
+  if (puzzle == PuzzleType.cube2x2) {
+    moves = ['R', 'U', 'F'];
+    length = 9;
+  } else if (puzzle == PuzzleType.cube3x3) {
+    moves = ['R', 'L', 'U', 'D', 'F', 'B'];
+    length = 20;
+  } else if (puzzle == PuzzleType.cube4x4) {
+    // Simplified 4x4: Standard moves + Rw etc if we wanted,
+    // but sticking to standard notation plus 'w' modifier chance for simplicity.
+    moves = ['R', 'L', 'U', 'D', 'F', 'B', 'Uw', 'Fw', 'Rw'];
+    length = 40;
+  }
+
+  List<String> modifiers = ['', "'", '2'];
+
+  List<String> scramble = [];
   String lastMove = "";
 
-  for (int i = 0; i < 20; i++) {
+  for (int i = 0; i < length; i++) {
     String move = "";
     do {
       move = (moves..shuffle()).first;

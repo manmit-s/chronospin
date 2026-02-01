@@ -104,6 +104,77 @@ class AppDrawer extends ConsumerWidget {
             },
           ),
 
+          const Divider(thickness: 0.5, color: Colors.white10),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              "Puzzle Type",
+              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+            ),
+          ),
+
+          Consumer(
+            builder: (context, ref, _) {
+              final current = ref.watch(puzzleProvider);
+              return ListTile(
+                leading: const Icon(Icons.extension, color: Colors.white),
+                title: Text(
+                  current.label,
+                  style: const TextStyle(color: Colors.white),
+                ),
+                trailing: const Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.white54,
+                ),
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: const Color(0xFF1E1E1E),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                    ),
+                    builder: (ctx) => SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 12),
+                          Container(
+                            height: 4,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[800],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ...PuzzleType.values.map(
+                            (p) => ListTile(
+                              title: Text(
+                                p.label,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              trailing: p == current
+                                  ? Icon(Icons.check, color: theme.primaryColor)
+                                  : null,
+                              onTap: () {
+                                ref.read(puzzleProvider.notifier).state = p;
+                                ref.invalidate(scrambleProvider);
+                                Navigator.pop(ctx);
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
