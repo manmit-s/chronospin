@@ -1,4 +1,5 @@
 import 'package:chronospin/core/theme/app_theme.dart';
+import 'package:chronospin/core/presentation/widgets/app_drawer.dart';
 import 'package:chronospin/features/history/presentation/pages/history_page.dart';
 import 'package:chronospin/features/history/presentation/providers/history_providers.dart';
 import 'package:chronospin/features/history/domain/solve.dart';
@@ -19,6 +20,7 @@ class TimerPage extends ConsumerStatefulWidget {
 
 class _TimerPageState extends ConsumerState<TimerPage> {
   Timer? _ticker;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   void _handleHoldStart() {
     if (ref.read(timerStateProvider) == TimerState.idle) {
@@ -92,6 +94,8 @@ class _TimerPageState extends ConsumerState<TimerPage> {
     final themeAccent = ref.watch(themeProvider).accent.color;
 
     return Scaffold(
+      key: _scaffoldKey,
+      drawer: const AppDrawer(),
       backgroundColor: Colors.black, // Ensure pure black
       body: GestureDetector(
         behavior: HitTestBehavior.opaque,
@@ -119,13 +123,17 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                CircleAvatar(
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).cardTheme.color,
-                                  child: const Icon(
-                                    Icons.settings,
-                                    color: Colors.grey,
+                                InkWell(
+                                  onTap: () =>
+                                      _scaffoldKey.currentState?.openDrawer(),
+                                  child: CircleAvatar(
+                                    backgroundColor: Theme.of(
+                                      context,
+                                    ).cardTheme.color,
+                                    child: const Icon(
+                                      Icons.settings,
+                                      color: Colors.grey,
+                                    ),
                                   ),
                                 ),
                                 InkWell(
