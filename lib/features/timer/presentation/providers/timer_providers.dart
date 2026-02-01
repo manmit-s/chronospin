@@ -1,14 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// Puzzle Types
-enum PuzzleType {
-  cube2x2('2x2 Cube'),
-  cube3x3('3x3 Cube'),
-  cube4x4('4x4 Cube');
-
-  final String label;
-  const PuzzleType(this.label);
-}
+import 'package:chronospin/features/timer/domain/puzzle_type.dart';
 
 final puzzleProvider = StateProvider<PuzzleType>((ref) => PuzzleType.cube3x3);
 

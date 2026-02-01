@@ -4,6 +4,7 @@ import 'package:chronospin/features/timer/presentation/providers/timer_providers
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:chronospin/features/timer/domain/puzzle_type.dart';
 
 class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});

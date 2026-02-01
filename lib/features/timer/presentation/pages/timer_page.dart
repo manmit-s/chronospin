@@ -114,6 +114,7 @@ class _TimerPageState extends ConsumerState<TimerPage> {
         time: elapsed,
         scramble: scramble,
         timestamp: DateTime.now(),
+        puzzle: ref.read(puzzleProvider),
       );
 
       ref.read(historyProvider.notifier).addSolve(solve);
@@ -146,6 +147,7 @@ class _TimerPageState extends ConsumerState<TimerPage> {
           scramble: scramble,
           timestamp: DateTime.now(),
           penalty: Penalty.dnf,
+          puzzle: ref.read(puzzleProvider),
         );
         ref.read(historyProvider.notifier).addSolve(solve);
 

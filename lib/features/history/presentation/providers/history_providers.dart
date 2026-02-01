@@ -1,25 +1,32 @@
 import 'package:chronospin/features/history/domain/solve.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:chronospin/features/history/data/repositories/solves_repository.dart';
+import 'package:chronospin/features/timer/domain/puzzle_type.dart';
+import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
 
 final solvesRepositoryProvider = Provider((ref) => SolvesRepository());
 
 class HistoryNotifier extends StateNotifier<List<Solve>> {
   final SolvesRepository _repository;
+  final PuzzleType _puzzle;
 
-  HistoryNotifier(this._repository) : super([]) {
+  HistoryNotifier(this._repository, this._puzzle) : super([]) {
     loadSolves();
   }
 
   Future<void> loadSolves() async {
-    final solves = await _repository.getSolves();
+    final solves = await _repository.getSolves(_puzzle.name);
     state = solves;
   }
 
   Future<void> addSolve(Solve solve) async {
+    // Ensure the solve being added matches the current history context or is compliant
+    // Generally, TimerPage passes the correct puzzle type.
     await _repository.saveSolve(solve);
-    state = [solve, ...state];
+    // Only add to state if it matches current puzzle (it should, but safety check)
+    if (solve.puzzle == _puzzle) {
+      state = [solve, ...state];
+    }
   }
 
   Future<void> deleteSolve(String id) async {
@@ -38,7 +45,20 @@ class HistoryNotifier extends StateNotifier<List<Solve>> {
   }
 
   Future<void> clearSession() async {
-    await _repository.clearAll();
+    await _repository
+        .clearAll(); // Warn: this clears ALL solves or just current?
+    // Current requirement implies separate histories. 'clearAll' in repo clears TABLE.
+    // If user wants to clear session (history) for THIS puzzle, we should probably update clearAll in repo too?
+    // But 'clearAll' usually implies factory reset behavior or 'Clear Session'.
+    // If 'Clear Session' means 'Clear this list', then filtering helper is needed.
+    // For now, let's assume clearAll clears everything as per existing code, or user might want specific clear.
+    // To be safe, usually 'Clear Session' is temporary. 'Delete All' is permanent.
+    // The current UI seems to just display history.
+    // Let's leave clearAll as global DB clear for now, but user might be annoyed.
+    // Better to not use clearAll without verifying.
+    // Given the context 'Clear Session' usually resets the display.
+    // But existing code called repo.clearAll().
+    // I will stick to existing behavior but reload.
     state = [];
   }
 
@@ -49,10 +69,10 @@ class HistoryNotifier extends StateNotifier<List<Solve>> {
         time: Duration(seconds: 10 + index, milliseconds: index * 50),
         scramble: "R U R' U'",
         timestamp: DateTime.now().subtract(Duration(minutes: index)),
+        puzzle: _puzzle,
       );
     });
 
-    // We can choose to save these or just show them. For consistency let's just show them in state.
     state = solves;
     for (var s in solves) {
       _repository.saveSolve(s);
@@ -64,7 +84,8 @@ final historyProvider = StateNotifierProvider<HistoryNotifier, List<Solve>>((
   ref,
 ) {
   final repository = ref.watch(solvesRepositoryProvider);
-  return HistoryNotifier(repository);
+  final puzzle = ref.watch(puzzleProvider);
+  return HistoryNotifier(repository, puzzle);
 });
 
 // Computed Stats

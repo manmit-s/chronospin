@@ -12,9 +12,14 @@ class SolvesRepository {
     );
   }
 
-  Future<List<Solve>> getSolves() async {
+  Future<List<Solve>> getSolves(String puzzleType) async {
     final db = await LocalDatabase.instance.database;
-    final result = await db.query('solves', orderBy: 'timestamp DESC');
+    final result = await db.query(
+      'solves',
+      where: 'puzzle = ?',
+      whereArgs: [puzzleType],
+      orderBy: 'timestamp DESC',
+    );
 
     return result.map((json) => Solve.fromMap(json)).toList();
   }

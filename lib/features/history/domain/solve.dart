@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import 'package:chronospin/features/timer/domain/puzzle_type.dart';
 
 enum Penalty { none, plus2, dnf }
 
@@ -9,6 +10,7 @@ class Solve {
   final DateTime timestamp;
   final Penalty penalty;
   final String? notes;
+  final PuzzleType puzzle;
 
   Solve({
     String? id,
@@ -17,6 +19,7 @@ class Solve {
     required this.timestamp,
     this.penalty = Penalty.none,
     this.notes,
+    this.puzzle = PuzzleType.cube3x3,
   }) : id = id ?? const Uuid().v4();
 
   Duration get effectiveTime {
@@ -33,6 +36,7 @@ class Solve {
     DateTime? timestamp,
     Penalty? penalty,
     String? notes,
+    PuzzleType? puzzle,
   }) {
     return Solve(
       id: id ?? this.id,
@@ -41,6 +45,7 @@ class Solve {
       timestamp: timestamp ?? this.timestamp,
       penalty: penalty ?? this.penalty,
       notes: notes ?? this.notes,
+      puzzle: puzzle ?? this.puzzle,
     );
   }
 
@@ -52,6 +57,7 @@ class Solve {
       'timestamp': timestamp.toIso8601String(),
       'penalty': penalty.name,
       'notes': notes ?? '',
+      'puzzle': puzzle.name, // Store as enum name (e.g., 'cube3x3')
     };
   }
 
@@ -66,6 +72,11 @@ class Solve {
         orElse: () => Penalty.none,
       ),
       notes: map['notes'] == '' ? null : map['notes'],
+      puzzle: PuzzleType.values.firstWhere(
+        // Handle migration: if 'puzzle' is null (old db), default to 3x3
+        (e) => e.name == map['puzzle'],
+        orElse: () => PuzzleType.cube3x3,
+      ),
     );
   }
 }
