@@ -40,6 +40,19 @@ class TimerDisplay extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        if (timerState == TimerState.inspection)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Text(
+              "INSPECTION",
+              style: TextStyle(
+                color: Colors.orangeAccent, // Match inspection color
+                letterSpacing: 2.0,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         Text(
           formattedTime,
           style: TextStyle(

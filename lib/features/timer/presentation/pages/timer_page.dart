@@ -179,7 +179,10 @@ class _TimerPageState extends ConsumerState<TimerPage> {
   @override
   Widget build(BuildContext context) {
     final timerState = ref.watch(timerStateProvider);
-    final isRunning = timerState == TimerState.running;
+    final isFocusMode =
+        timerState == TimerState.running ||
+        timerState == TimerState.inspection ||
+        timerState == TimerState.ready;
     final currentScramble = ref.watch(scrambleProvider);
     final themeAccent = ref.watch(themeProvider).accent.color;
 
@@ -194,15 +197,20 @@ class _TimerPageState extends ConsumerState<TimerPage> {
         onTap: _handleTap,
         child: Stack(
           children: [
-            // Main Layout (Top + Timer) - Using Column to prevent overlap
-            Column(
-              children: [
-                // Top Section
-                AnimatedOpacity(
+            // 1. Top UI Section
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 300),
+                offset: isFocusMode ? const Offset(0, -1) : Offset.zero,
+                curve: Curves.easeInOut,
+                child: AnimatedOpacity(
                   duration: const Duration(milliseconds: 200),
-                  opacity: isRunning ? 0.0 : 1.0,
+                  opacity: isFocusMode ? 0.0 : 1.0,
                   child: IgnorePointer(
-                    ignoring: isRunning,
+                    ignoring: isFocusMode,
                     child: SafeArea(
                       bottom: false,
                       child: Padding(
@@ -317,37 +325,40 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                     ),
                   ),
                 ),
-
-                // Timer fills the remaining space
-                const Expanded(child: Center(child: TimerDisplay())),
-
-                // Spacer for Bottom Sheet area
-                const SizedBox(height: 180),
-              ],
+              ),
             ),
+
+            // 2. Timer Center - Independent of other UI
+            const Center(child: TimerDisplay()),
+            
 
             // History Action Button
             Positioned(
               left: 20,
               bottom: 180,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: isRunning ? 0.0 : 1.0,
-                child: IgnorePointer(
-                  ignoring: isRunning,
-                  child: FloatingActionButton.small(
-                    heroTag: "history",
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HistoryPage(),
-                        ),
-                      );
-                    },
-                    backgroundColor: const Color(0xFF1E1E1E),
-                    foregroundColor: Colors.white,
-                    child: const Icon(Icons.history),
+              child: AnimatedSlide(
+               duration: const Duration(milliseconds: 300),
+               offset: isFocusMode ? const Offset(-2, 0) : Offset.zero,
+               curve: Curves.easeInOut,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isFocusMode ? 0.0 : 1.0,
+                  child: IgnorePointer(
+                    ignoring: isFocusMode,
+                    child: FloatingActionButton.small(
+                      heroTag: "history",
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const HistoryPage(),
+                          ),
+                        );
+                      },
+                      backgroundColor: const Color(0xFF1E1E1E),
+                      foregroundColor: Colors.white,
+                      child: const Icon(Icons.history),
+                    ),
                   ),
                 ),
               ),
@@ -356,12 +367,16 @@ class _TimerPageState extends ConsumerState<TimerPage> {
             // Bottom Stats Sheet
             Align(
               alignment: Alignment.bottomCenter,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: isRunning ? 0.0 : 1.0,
-                child: IgnorePointer(
-                  ignoring: isRunning,
-                  child: GestureDetector(
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 300),
+                offset: isFocusMode ? const Offset(0, 1) : Offset.zero,
+                curve: Curves.easeInOut,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isFocusMode ? 0.0 : 1.0,
+                  child: IgnorePointer(
+                    ignoring: isFocusMode,
+                    child: GestureDetector(
                     onTap: () {}, // Absorb taps to prevent timer interaction
                     child: Container(
                       width: double.infinity,
