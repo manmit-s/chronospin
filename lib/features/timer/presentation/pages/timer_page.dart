@@ -134,15 +134,28 @@ class _TimerPageState extends ConsumerState<TimerPage> {
     _inspectionTicker?.cancel();
     _inspectionTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
       final current = ref.read(inspectionTimeProvider);
-      if (current > -2) {
-        // Allow going slightly negative to show +2/DNF logic if we wanted, or just stop at 0
-        ref.read(inspectionTimeProvider.notifier).state = current - 1;
+      final next = current - 1;
+
+      if (next < -2) {
+        // DNF TRIGGER
+        timer.cancel();
+
+        final scramble = ref.read(scrambleProvider);
+        final solve = Solve(
+          time: Duration.zero,
+          scramble: scramble,
+          timestamp: DateTime.now(),
+          penalty: Penalty.dnf,
+        );
+        ref.read(historyProvider.notifier).addSolve(solve);
+
+        // Reset state
+        ref.read(timerStateProvider.notifier).setIdle();
+        ref.read(elapsedTimeProvider.notifier).state =
+            Duration.zero; // Reset display
+        ref.invalidate(scrambleProvider);
       } else {
-        // Time Over behavior?
-        // For now just keep counting down or stop.
-        // timer.cancel();
-        // optionally DNF?
-        ref.read(inspectionTimeProvider.notifier).state = current - 1;
+        ref.read(inspectionTimeProvider.notifier).state = next;
       }
     });
   }

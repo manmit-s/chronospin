@@ -13,8 +13,18 @@ class TimerDisplay extends ConsumerWidget {
     String formattedTime = _formatTime(duration);
     final inspectionTime = ref.watch(inspectionTimeProvider);
 
+    final inspectionSettings = ref.watch(inspectionSettingsProvider);
+
+    // Helper to format inspection time (e.g. -1 becomes +1, -2 becomes +2)
+    String formatInspection(int val) {
+      if (val <= 0) return "+${val.abs()}";
+      return val.toString();
+    }
+
     if (timerState == TimerState.inspection) {
-      formattedTime = inspectionTime.toString();
+      formattedTime = formatInspection(inspectionTime);
+    } else if (timerState == TimerState.ready && inspectionSettings.enabled) {
+      formattedTime = formatInspection(inspectionTime);
     }
 
     Color timerColor = Colors.white;
