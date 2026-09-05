@@ -5,7 +5,18 @@ import 'package:chronospin/features/timer/domain/puzzle_type.dart';
 import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
 
 class ScrambleNet extends ConsumerWidget {
-  const ScrambleNet({super.key});
+  final double? stickerSize;
+  final double? gap;
+  final double? faceGap;
+  final AlignmentGeometry alignment;
+
+  const ScrambleNet({
+    super.key,
+    this.stickerSize,
+    this.gap,
+    this.faceGap,
+    this.alignment = Alignment.center,
+  });
 
   static const _stickerColors = {
     cuber.Color.up: Color(0xFFFFFFFF),
@@ -30,40 +41,45 @@ class ScrambleNet extends ConsumerWidget {
     final puzzle = ref.watch(puzzleProvider);
     final scramble = ref.watch(scrambleProvider);
 
-    if (puzzle != PuzzleType.cube3x3) {
-      return const _Placeholder();
-    }
-
-    if (scramble.isEmpty) {
-      return const _Placeholder();
-    }
-
     List<cuber.Color>? colors;
-    try {
-      final cube = cuber.Algorithm.parse(scramble).apply(cuber.Cube.solved);
-      colors = cube.colors;
-    } catch (_) {}
-
-    if (colors == null) {
-      return const _Placeholder();
+    if (puzzle == PuzzleType.cube3x3 && scramble.isNotEmpty) {
+      try {
+        final cube = cuber.Algorithm.parse(scramble).apply(cuber.Cube.solved);
+        colors = cube.colors;
+      } catch (_) {}
     }
 
     final resolvedColors = colors;
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        const gap = 2.0;
-        final stickerSize = _computeStickerSize(constraints.maxWidth, gap);
-        final totalW = 12 * stickerSize + 11 * gap;
-        final totalH = 9 * stickerSize + 8 * gap;
+        final double resolvedGap = gap ?? 2.0;
+        final double resolvedFaceGap = faceGap ?? (resolvedGap * 3.0);
+        final double resolvedStickerSize =
+            stickerSize ?? _computeStickerSize(constraints.maxWidth, resolvedGap, resolvedFaceGap);
+        final totalW = 12 * resolvedStickerSize + 8 * resolvedGap + 3 * resolvedFaceGap;
+        final totalH = 9 * resolvedStickerSize + 6 * resolvedGap + 2 * resolvedFaceGap;
 
-        return Center(
-          child: Container(
+        const paddingValue = 8.0;
+
+        if (resolvedColors == null) {
+          return _Placeholder(
             width: totalW,
             height: totalH,
+            alignment: alignment,
+            padding: paddingValue,
+          );
+        }
+
+        return Align(
+          alignment: alignment,
+          child: Container(
+            width: totalW + 2 * paddingValue,
+            height: totalH + 2 * paddingValue,
+            padding: const EdgeInsets.all(paddingValue),
             decoration: BoxDecoration(
               color: const Color(0xFF0A0A0A),
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -71,8 +87,9 @@ class ScrambleNet extends ConsumerWidget {
                 size: Size(totalW, totalH),
                 painter: _NetPainter(
                   colors: resolvedColors,
-                  stickerSize: stickerSize,
-                  gap: gap,
+                  stickerSize: resolvedStickerSize,
+                  gap: resolvedGap,
+                  faceGap: resolvedFaceGap,
                 ),
               ),
             ),
@@ -82,8 +99,8 @@ class ScrambleNet extends ConsumerWidget {
     );
   }
 
-  static double _computeStickerSize(double availableWidth, double gap) {
-    return ((availableWidth - 11 * gap - 16) / 12).clamp(10.0, 28.0);
+  static double _computeStickerSize(double availableWidth, double gap, double faceGap) {
+    return ((availableWidth - 8 * gap - 3 * faceGap - 16) / 12).clamp(10.0, 28.0);
   }
 }
 
@@ -91,11 +108,13 @@ class _NetPainter extends CustomPainter {
   final List<cuber.Color> colors;
   final double stickerSize;
   final double gap;
+  final double faceGap;
 
   _NetPainter({
     required this.colors,
     required this.stickerSize,
     required this.gap,
+    required this.faceGap,
   });
 
   @override
@@ -108,6 +127,7 @@ class _NetPainter extends CustomPainter {
 
     final s = stickerSize;
     final g = gap;
+    final fg = faceGap;
 
     for (final (col, row, offset) in ScrambleNet._faceLayout) {
       for (int sy = 0; sy < 3; sy++) {
@@ -116,8 +136,8 @@ class _NetPainter extends CustomPainter {
           final cuberColor = colors[idx];
           final flutterColor = ScrambleNet._stickerColors[cuberColor]!;
 
-          final x = (col * 3 + sx) * (s + g);
-          final y = (row * 3 + sy) * (s + g);
+          final x = col * (3 * s + 2 * g + fg) + sx * (s + g);
+          final y = row * (3 * s + 2 * g + fg) + sy * (s + g);
 
           final rrect = RRect.fromRectAndRadius(
             Rect.fromLTWH(x, y, s, s),
@@ -134,29 +154,47 @@ class _NetPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_NetPainter oldDelegate) =>
-      colors != oldDelegate.colors;
+      colors != oldDelegate.colors ||
+      stickerSize != oldDelegate.stickerSize ||
+      gap != oldDelegate.gap ||
+      faceGap != oldDelegate.faceGap;
 }
 
 class _Placeholder extends StatelessWidget {
-  const _Placeholder();
+  final double width;
+  final double height;
+  final AlignmentGeometry alignment;
+  final double padding;
+
+  const _Placeholder({
+    required this.width,
+    required this.height,
+    required this.alignment,
+    required this.padding,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 140,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        "SCRAMBLE NET",
-        style: TextStyle(
-          color: Colors.grey.withValues(alpha: 0.3),
-          fontSize: 10,
-          letterSpacing: 2,
-          fontWeight: FontWeight.bold,
+    return Align(
+      alignment: alignment,
+      child: Container(
+        height: height + 2 * padding,
+        width: width + 2 * padding,
+        padding: EdgeInsets.all(padding),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0A0A0A),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          "SCRAMBLE NET",
+          style: TextStyle(
+            color: Colors.grey.withValues(alpha: 0.3),
+            fontSize: (height * 0.1).clamp(6.0, 10.0),
+            letterSpacing: 1.5,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
     );
