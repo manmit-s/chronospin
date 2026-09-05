@@ -5,6 +5,7 @@ import 'package:chronospin/features/history/presentation/providers/history_provi
 import 'package:chronospin/features/history/domain/solve.dart';
 import 'package:chronospin/features/profile/presentation/pages/profile_page.dart';
 import 'package:chronospin/features/timer/presentation/providers/timer_providers.dart';
+import 'package:chronospin/features/timer/presentation/widgets/scramble_net.dart';
 import 'package:chronospin/features/timer/presentation/widgets/timer_display.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -317,29 +318,12 @@ class _TimerPageState extends ConsumerState<TimerPage> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            // Scramble Net Placeholder
-                            Container(
-                              height: 140,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                // color: const Color(0xFF101010),
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(0.2),
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              alignment: Alignment.topCenter,
-                              padding: const EdgeInsets.only(top: 8),
-                              child: Text(
-                                "SCRAMBLE NET",
-                                style: TextStyle(
-                                  color: Colors.grey.withOpacity(0.3),
-                                  fontSize: 10,
-                                  letterSpacing: 2,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                            const SizedBox(height: 8),
+                            const ScrambleNet(
+                              stickerSize: 10.0,
+                              gap: 1.3,
+                              faceGap: 4.5,
+                              alignment: Alignment.centerLeft,
                             ),
                           ],
                         ),
